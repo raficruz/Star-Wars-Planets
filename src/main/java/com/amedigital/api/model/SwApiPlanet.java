@@ -1,9 +1,6 @@
 package com.amedigital.api.model;
 
 import java.io.Serializable;
-import java.util.Set;
-
-import com.fasterxml.jackson.annotation.JsonProperty;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
