@@ -5,6 +5,7 @@ import java.util.Collections;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
@@ -33,31 +34,37 @@ public class SwApiHelper {
 	@Value("${swapi.planets.list.api}")
 	private String planetsListApi;
 
-	public Integer getPlanetData(final String name) {
-		HttpEntity<SwapiSearch> response = executeRequest(getHttpEntity());
+	@Value("${swapi.planets.name.api}")
+	private String planetsNameApi;
 
-		return Arrays.asList(response.getBody().getResults())
-				.stream().filter(p -> p.getName().equals(name))
-				.mapToInt(p -> p.getApparitionsCount())
-				.findAny()
+	public Integer getPlanetApparitions(final String name) {
+		HttpEntity<SwapiSearch> response = executeRequest(getHttpEntity(), planetsNameApi, name);
+
+		return Arrays.asList(response.getBody().getResults()).stream().mapToInt(p -> p.getApparitionsCount()).findAny()
 				.getAsInt();
 	}
 
+	@Cacheable("SwapiPlanets")
 	public Flux<Planet> getPlanets() {
 		try {
-			HttpEntity<SwapiSearch> response = executeRequest(getHttpEntity());
-			
-			return Flux.fromIterable(mapper.castListOfGenericToListOfBase(Arrays.asList(response.getBody().getResults())));
+			HttpEntity<SwapiSearch> response = executeRequest(getHttpEntity(), planetsListApi);
+
+			return Flux
+					.fromIterable(mapper.castListOfGenericToListOfBase(Arrays.asList(response.getBody().getResults())));
 		} catch (Exception ex) {
 			return null;
 		}
 	}
 
-	private HttpEntity<SwapiSearch> executeRequest(HttpEntity<?> entity) {
-		HttpEntity<SwapiSearch> response = operations.exchange("https://swapi.co/api/planets", 
-																HttpMethod.GET,
-																entity,
-																SwapiSearch.class);
+	private HttpEntity<SwapiSearch> executeRequest(HttpEntity<?> entity, String api) {
+		HttpEntity<SwapiSearch> response = operations.exchange(baseUrl + api, HttpMethod.GET, entity,
+				SwapiSearch.class);
+		return response;
+	}
+
+	private HttpEntity<SwapiSearch> executeRequest(HttpEntity<?> entity, String api, String name) {
+		HttpEntity<SwapiSearch> response = operations.exchange(baseUrl + api, HttpMethod.GET, entity, SwapiSearch.class,
+				name);
 		return response;
 	}
 
