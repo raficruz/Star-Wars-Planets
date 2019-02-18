@@ -33,7 +33,7 @@ public class PlanetServiceImpl implements PlanetService {
 		Assert.notNull(newPlanet.getClimate(), "Climate must not be null");
 		Assert.notNull(newPlanet.getTerrain(), "Terrain must not be null");
 
-		Integer appearancesCount = swClient.getPlanetData(newPlanet.getName());
+		Integer appearancesCount = swClient.getPlanetApparitions(newPlanet.getName());
 		newPlanet.setAppearancesNumber(appearancesCount);
 		
 		return repository.save(newPlanet)
